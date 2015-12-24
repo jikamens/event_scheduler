@@ -1,1 +1,4 @@
-from .scheduler import Scheduler  # noqa
+from .scheduler import (  # noqa
+    Scheduler,
+    ScheduleFailureError,
+)
