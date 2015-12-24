@@ -363,7 +363,6 @@ class Scheduler(object):
                 if self.swap(attendee):
                     changed = True
             if not changed:
-                print self.dump()
                 raise ScheduleFailureError(
                     'Could not assign all attendees in fill phase')
         max_preferences = max(len(a.preferences) for a in attendees)
