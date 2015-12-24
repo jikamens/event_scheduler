@@ -354,11 +354,13 @@ class Scheduler(object):
                     # slots, and has already gotten all of them.
                     continue
                 self.assign(attendee)
-        while any(a for a in attendees if a.num_assignments < n):
+        while any(a for a in attendees
+                  if a.num_assignments < min(n, len(a.preferences))):
             attendees.sort(key=lambda a: (a.num_assignments, str(a)))
             changed = False
             for attendee in attendees:
-                if attendee.num_assignments == n:
+                if attendee.num_assignments == \
+                   min(n, len(attendee.preferences)):
                     break
                 if self.swap(attendee):
                     changed = True
