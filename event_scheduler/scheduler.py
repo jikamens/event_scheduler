@@ -211,7 +211,7 @@ class Scheduler(object):
 
         return self.assign(attendee, topic, immutable=True)
 
-    def assign(self, attendee, topic=None, immutable=False):
+    def assign(self, attendee, topic=None, immutable=False, randomly=False):
         """Assign an attendee to their next best available topic session.
 
         Generally speaking, you will call ``schedule()`` rather than
@@ -244,14 +244,21 @@ class Scheduler(object):
             topic = next(self.topics[t] for t in self.topics
                          if topic == t)
 
-        for preference in attendee.preferences:
+        preferences = list(attendee.preferences)
+        if randomly:
+            random.shuffle(preferences)
+        for preference in preferences:
             if preference.assigned:
                 continue
             if topic is not None and topic != preference.topic:
                 continue
             ptopic = preference.topic
-            for session in sorted(self.topics[unicode(ptopic)].sessions,
-                                  key=lambda s: len(s.attendees)):
+            sessions = list(self.topics[unicode(ptopic)].sessions)
+            if randomly:
+                random.shuffle(sessions)
+            else:
+                sessions.sort(key=lambda s: len(s.attendees))
+            for session in sessions:
                 try:
                     self._assign(attendee, session, immutable=immutable)
                     return True
@@ -285,6 +292,41 @@ class Scheduler(object):
         if self.history:
             self.history[-1].append(
                 partial(self._assign, attendee, session, immutable))
+
+    def random_schedule(self):
+        """Schedule attendees with randomized sessions and preferences.
+
+        Like ``schedule``, but ignores the order of attendees'
+        preferences, distributes attendees among sessions randomly
+        rather than distributing evenly among them, and randomizes
+        attendees on each scheduling pass rather than using a "fairer"
+        ordering of attendees.
+
+        I *think* there may be event datasets in which the normal
+        scheduling algorithm fails whereas (some) random scheduling
+        passes will sometimes succeed, though I've yet to actually
+        find an example of such a dataset in real-world use. Therefore,
+        Therefore, the usefulness of this scheduling mode is currently
+        theoretical.
+
+        If you find a situation where ``schedule`` fails but
+        ``random_schedule`` succeeds at least some of the time, let me
+        know!
+        """
+
+        n = len(self.time_slots)
+        while True:
+            attendees = [a for a in self.attendees.values()
+                         if a.num_assignments < min(len(a.preferences), n)]
+            if not attendees:
+                return True
+            random.shuffle(attendees)
+            changed = False
+            for attendee in attendees:
+                changed |= self.assign(attendee, randomly=True)
+            if not changed:
+                break
+        return self.schedule()
 
     def schedule(self):
         """Automatically schedule attendees in sessions.
