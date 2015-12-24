@@ -1,4 +1,3 @@
-
 """Python Event Scheduler
 
 Match event attendees with topics and time slots based on preferences.
