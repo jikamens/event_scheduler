@@ -197,7 +197,7 @@ class Scheduler(object):
                 attendee))
         self.attendees[unicode(attendee)] = attendee
 
-    def manually_assign(self, attendee, topic):
+    def manually_assign(self, attendee, topic, session=None):
         """Manually assign an attendee to a session for a specific topic.
 
         The specified topic must appear in the attendee's preferences.
@@ -209,9 +209,10 @@ class Scheduler(object):
         ``assign(attendee, topic=topic, immutable=True)``.
         """
 
-        return self.assign(attendee, topic, immutable=True)
+        return self.assign(attendee, topic, session, immutable=True)
 
-    def assign(self, attendee, topic=None, immutable=False, randomly=False):
+    def assign(self, attendee, topic=None, session=None, immutable=False,
+               randomly=False):
         """Assign an attendee to their next best available topic session.
 
         Generally speaking, you will call ``schedule()`` rather than
@@ -244,6 +245,11 @@ class Scheduler(object):
             topic = next(self.topics[t] for t in self.topics
                          if topic == t)
 
+        if topic is not None and session is not None and \
+           session.topic != topic:
+            raise Exception('Mismatch between topic {} and session {}'.format(
+                topic, session))
+
         preferences = list(attendee.preferences)
         if randomly:
             random.shuffle(preferences)
@@ -258,11 +264,15 @@ class Scheduler(object):
                 random.shuffle(sessions)
             else:
                 sessions.sort(key=lambda s: len(s.attendees))
-            for session in sessions:
+            for tsession in sessions:
+                if session is not None and session != tsession:
+                    continue
                 try:
-                    self._assign(attendee, session, immutable=immutable)
+                    self._assign(attendee, tsession, immutable=immutable)
                     return True
                 except (SlotConflictError, NoMoreSpaceError):
+                    if session is not None:
+                        raise
                     pass
         return False
 
