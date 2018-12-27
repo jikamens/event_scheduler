@@ -440,7 +440,7 @@ class Scheduler(object):
         If ``force=True``, then also clear immutable assignments.
         """
 
-        for attendee in self.attendees:
+        for attendee in self.attendees.values():
             for preference in attendee.preferences:
                 if preference.assignment is None:
                     continue
