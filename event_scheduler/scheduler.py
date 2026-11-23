@@ -88,6 +88,13 @@ submit issues or pull requests there!
 
 You can also email me at jik@kamens.us with any questions.
 
+GENERATIVE AI POLICY
+--------------------
+
+This project does not solicit or accept work produced with substantive
+assistance from generative AI. Only hand-crafted code
+<https://handcraftedcode.org> is welcome here.
+
 COPYRIGHT
 ---------
 
